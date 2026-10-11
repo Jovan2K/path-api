@@ -120,7 +120,7 @@ func (h *Handler) UpdateProfilePicture(c *echo.Context) error {
 func (h *Handler) ResetPassword(c *echo.Context) error {
 	claims, err := utils.GetClaims(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Tidak dapat mengakses data klaim")
+		return echo.NewHTTPError(http.StatusUnauthorized, "Tidak dapat mengakses informasi user")
 	}
 
 	req := new(ResetPasswordRequest)
@@ -131,24 +131,29 @@ func (h *Handler) ResetPassword(c *echo.Context) error {
 		return utils.ValidationErrorHandler(c, err)
 	}
 
-	user, err := h.db.GetPengguna(c.Request().Context(), int32(claims.UserID))
+	password, err := h.db.GetPasswordPenggunaByID(c.Request().Context(), int32(claims.UserID))
 	if err != nil {
+		log.Println(err)
 		return echo.NewHTTPError(http.StatusNotFound, "Pengguna tidak ditemukan")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Password tidak sesuai dengan Password lama")
+	err = bcrypt.CompareHashAndPassword([]byte(password), []byte(req.OldPassword))
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Password tidak sesuai dengan password lama")
 	}
 
-	hashedNewPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
+		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memproses password baru")
 	}
 
 	err = h.db.UpdatePasswordPengguna(c.Request().Context(), db.UpdatePasswordPenggunaParams{
-		ID:       user.ID,
-		Password: string(hashedNewPassword),
+		ID:       int32(claims.UserID),
+		Password: string(hashedPassword),
 	})
+
 	if err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mereset password")

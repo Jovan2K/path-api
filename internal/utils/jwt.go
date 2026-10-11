@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -15,7 +16,10 @@ type JWTCustomClaims struct {
 
 var JWTConfig echojwt.Config = echojwt.Config{
 	NewClaimsFunc: func(c *echo.Context) jwt.Claims {
-		return new(jwt.RegisteredClaims)
+		return &JWTCustomClaims{}
+	},
+	ErrorHandler: func(c *echo.Context, err error) error {
+		return echo.NewHTTPError(http.StatusUnauthorized, "JWT tidak valid atau tidak ada")
 	},
 	SigningKey: []byte(GetSecret()),
 }

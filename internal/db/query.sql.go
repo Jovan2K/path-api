@@ -11,17 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const checkEmailPengguna = `-- name: CheckEmailPengguna :one
-SELECT 1 FROM pengguna WHERE email = $1
-`
-
-func (q *Queries) CheckEmailPengguna(ctx context.Context, email string) (int32, error) {
-	row := q.db.QueryRow(ctx, checkEmailPengguna, email)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
 const createPengguna = `-- name: CreatePengguna :one
 INSERT INTO pengguna (username, email, password)
 VALUES ($1, $2, $3)
@@ -41,37 +30,54 @@ func (q *Queries) CreatePengguna(ctx context.Context, arg CreatePenggunaParams) 
 	return id, err
 }
 
-const getPasswordPengguna = `-- name: GetPasswordPengguna :one
+const getPasswordPenggunaByEmail = `-- name: GetPasswordPenggunaByEmail :one
 SELECT id, password FROM pengguna WHERE email = $1
 `
 
-type GetPasswordPenggunaRow struct {
+type GetPasswordPenggunaByEmailRow struct {
 	ID       int32  `json:"id"`
 	Password string `json:"password"`
 }
 
-func (q *Queries) GetPasswordPengguna(ctx context.Context, email string) (GetPasswordPenggunaRow, error) {
-	row := q.db.QueryRow(ctx, getPasswordPengguna, email)
-	var i GetPasswordPenggunaRow
+func (q *Queries) GetPasswordPenggunaByEmail(ctx context.Context, email string) (GetPasswordPenggunaByEmailRow, error) {
+	row := q.db.QueryRow(ctx, getPasswordPenggunaByEmail, email)
+	var i GetPasswordPenggunaByEmailRow
 	err := row.Scan(&i.ID, &i.Password)
 	return i, err
 }
 
-const getPengguna = `-- name: GetPengguna :one
-SELECT id, username, email, phone, profile_picture, password, dibuat FROM pengguna WHERE id = $1 LIMIT 1
+const getPasswordPenggunaByID = `-- name: GetPasswordPenggunaByID :one
+SELECT password FROM pengguna WHERE id = $1
 `
 
-func (q *Queries) GetPengguna(ctx context.Context, id int32) (Pengguna, error) {
+func (q *Queries) GetPasswordPenggunaByID(ctx context.Context, id int32) (string, error) {
+	row := q.db.QueryRow(ctx, getPasswordPenggunaByID, id)
+	var password string
+	err := row.Scan(&password)
+	return password, err
+}
+
+const getPengguna = `-- name: GetPengguna :one
+SELECT id, username, email, phone, profile_picture FROM pengguna WHERE id = $1 LIMIT 1
+`
+
+type GetPenggunaRow struct {
+	ID             int32       `json:"id"`
+	Username       string      `json:"username"`
+	Email          string      `json:"email"`
+	Phone          pgtype.Text `json:"phone"`
+	ProfilePicture pgtype.Text `json:"profile_picture"`
+}
+
+func (q *Queries) GetPengguna(ctx context.Context, id int32) (GetPenggunaRow, error) {
 	row := q.db.QueryRow(ctx, getPengguna, id)
-	var i Pengguna
+	var i GetPenggunaRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
 		&i.Email,
 		&i.Phone,
 		&i.ProfilePicture,
-		&i.Password,
-		&i.Dibuat,
 	)
 	return i, err
 }

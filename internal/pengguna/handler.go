@@ -25,6 +25,6 @@ type UpdateProfilePictureRequest struct {
 }
 
 type ResetPasswordRequest struct {
-	OldPassword string `json:"old_password" validate:"required"`
-	NewPassword string `json:"new_password" validate:"required,min=6"`
+	OldPassword string `json:"old_password" validate:"required,min=8"`
+	NewPassword string `json:"new_password" validate:"required,min=8"`
 }

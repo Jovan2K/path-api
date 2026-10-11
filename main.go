@@ -11,6 +11,7 @@ import (
 	"path-api/internal/utils"
 
 	_ "github.com/joho/godotenv/autoload"
+	echojwt "github.com/labstack/echo-jwt/v5"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 )
@@ -44,14 +45,17 @@ func main() {
 	authHandler := auth.New(q)
 	authHandler.Routes(e)
 
+	protected := e.Group("")
+	protected.Use(echojwt.WithConfig(utils.JWTConfig))
+
 	penggunaHandler := pengguna.New(q)
-	penggunaHandler.Routes(e)
+	penggunaHandler.Routes(protected)
 
 	kelasHandler := kelas.New(q)
-	kelasHandler.Routes(e)
+	kelasHandler.Routes(protected)
 
 	postinganHandler := postingan.New(q)
-	postinganHandler.Routes(e)
+	postinganHandler.Routes(protected)
 
 	port := utils.GetPort()
 	err = e.Start(port)
