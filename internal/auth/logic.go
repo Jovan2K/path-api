@@ -29,7 +29,7 @@ func (h *Handler) Register(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memproses password")
 	}
 
-	exists, err := h.db.GetEmailPengguna(c.Request().Context(), req.Email)
+	exists, err := h.db.CheckEmailPengguna(c.Request().Context(), req.Email)
 	if exists != 0 {
 		log.Println("email sudah terdaftarkan:", exists)
 		return echo.NewHTTPError(http.StatusBadRequest, "email sudah terdaftarkan!")
@@ -69,7 +69,7 @@ func (h *Handler) Login(c *echo.Context) error {
 		return utils.ValidationErrorHandler(c, err)
 	}
 
-	pengguna, err := h.db.GetPengguna(c.Request().Context(), req.Email)
+	pengguna, err := h.db.GetPasswordPengguna(c.Request().Context(), req.Email)
 	if err != nil {
 		log.Println("username atau password salah", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "username atau password salah")

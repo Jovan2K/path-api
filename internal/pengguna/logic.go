@@ -17,7 +17,7 @@ func (h *Handler) Get(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Tidak dapat mengakses data klaim")
 	}
 
-	pengguna, err := h.db.GetPenggunaByID(c.Request().Context(), int32(claims.UserID))
+	pengguna, err := h.db.GetPengguna(c.Request().Context(), int32(claims.UserID))
 	if err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusNotFound, "Data pengguna tidak ditemukan")
@@ -131,7 +131,7 @@ func (h *Handler) ResetPassword(c *echo.Context) error {
 		return utils.ValidationErrorHandler(c, err)
 	}
 
-	user, err := h.db.GetPenggunaByID(c.Request().Context(), int32(claims.UserID))
+	user, err := h.db.GetPengguna(c.Request().Context(), int32(claims.UserID))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Pengguna tidak ditemukan")
 	}
@@ -145,7 +145,7 @@ func (h *Handler) ResetPassword(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memproses password baru")
 	}
 
-	err = h.db.UpdatePassword(c.Request().Context(), db.UpdatePasswordParams{
+	err = h.db.UpdatePasswordPengguna(c.Request().Context(), db.UpdatePasswordPenggunaParams{
 		ID:       user.ID,
 		Password: string(hashedNewPassword),
 	})

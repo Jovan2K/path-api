@@ -1,31 +1,3 @@
-# Panduan Development PATH API
-
-## Daftar Isi
-
-- [Prerequisites](#prerequisites)
-- [Setup Awal](#setup-awal)
-- [Membuat query SQL](#membuat-query-sql)
-- [Routing](#routing)
-- [Membuat Implementasi Route](#membuat-implementasi-route)
-- [Mengakses query SQL di `logic.go`](#mengakses-query-sql-di-logicgo)
-- [Catatan Tambahan](#catatan-tambahan)
-
-## Prerequisites
-
-1. Go version >= 1.26
-2. Postgres >= 1.18
-3. [sqlc](https://docs.sqlc.dev/en/latest/overview/install.html)
-
-```bash
-go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-```
-
-4. [goose](https://pressly.github.io/goose/installation) (opsional untuk migration)
-
-```bash
-go install github.com/pressly/goose/v3/cmd/goose@latest
-```
-
 ## Setup Awal
 
 1. Clone repository dan masuk pada direktori

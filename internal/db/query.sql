@@ -3,16 +3,16 @@ INSERT INTO pengguna (username, email, password)
 VALUES ($1, $2, $3)
 RETURNING id;
 
--- name: GetEmailPengguna :one
+-- name: CheckEmailPengguna :one
 SELECT 1 FROM pengguna WHERE email = $1;
 
--- name: GetPengguna :one
+-- name: GetPasswordPengguna :one
 SELECT id, password FROM pengguna WHERE email = $1;
 
--- name: GetPenggunaByID :one
+-- name: GetPengguna :one
 SELECT * FROM pengguna WHERE id = $1 LIMIT 1;
 
--- name: UpdatePassword :exec
+-- name: UpdatePasswordPengguna :exec
 UPDATE pengguna SET password = $2 WHERE id = $1;
 
 -- name: UpdateEmailPengguna :one
