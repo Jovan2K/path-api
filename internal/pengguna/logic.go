@@ -40,6 +40,12 @@ func (h *Handler) UpdateEmail(c *echo.Context) error {
 		return utils.ValidationErrorHandler(c, err)
 	}
 
+	_, err = h.db.GetPasswordPenggunaByEmail(c.Request().Context(), req.Email)
+	if err == nil {
+		log.Println("email sudah terdaftarkan")
+		return echo.NewHTTPError(http.StatusBadRequest, "email sudah terdaftarkan!")
+	}
+
 	updatedUser, err := h.db.UpdateEmailPengguna(c.Request().Context(), db.UpdateEmailPenggunaParams{
 		ID:    int32(claims.UserID),
 		Email: req.Email,
