@@ -23,3 +23,8 @@ UPDATE pengguna SET phone = $2 WHERE id = $1 RETURNING *;
 
 -- name: UpdateProfilePicturePengguna :one
 UPDATE pengguna SET profile_picture = $2 WHERE id = $1 RETURNING *;
+
+-- name: CreateKelas :one
+INSERT INTO kelas (nama, tingkat, mata_pelajaran, pembuat, kode_kelas)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id;

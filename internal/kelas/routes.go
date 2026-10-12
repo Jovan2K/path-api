@@ -6,4 +6,5 @@ func (h *Handler) Routes(e *echo.Group) {
 	kelas := e.Group("/kelas")
 
 	kelas.GET("", h.List)
+	kelas.POST("", h.Create)
 }
