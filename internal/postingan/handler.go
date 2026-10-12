@@ -13,7 +13,6 @@ func New(db *db.Queries) *Handler {
 }
 
 type ListPostinganRequest struct {
-	Tipe      db.TipePost `query:"tipe" validate:"required,oneof=tugas materi"`
-	KelasID   int32  `param:"kelas_id" validate:"required"`
+	Tipe    db.TipePost `query:"tipe" validate:"required,oneof=tugas materi"`
+	KelasID int32       `param:"kelasID" validate:"required"`
 }
-
