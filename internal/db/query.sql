@@ -23,3 +23,7 @@ UPDATE pengguna SET phone = $2 WHERE id = $1 RETURNING *;
 
 -- name: UpdateProfilePicturePengguna :one
 UPDATE pengguna SET profile_picture = $2 WHERE id = $1 RETURNING *;
+
+-- name: ListPostingan :many
+SELECT * FROM postingan WHERE tipe = $1 AND pengguna_id = $2 AND kelas_id = $3;
+

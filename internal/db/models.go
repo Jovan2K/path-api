@@ -127,16 +127,16 @@ type PengumpulanTuga struct {
 	ID          int32            `json:"id"`
 	PostinganID int32            `json:"postingan_id"`
 	Lampiran    []string         `json:"lampiran"`
-	PenggunaID  int32            `json:"pengguna_id"`
 	Dibuat      pgtype.Timestamp `json:"dibuat"`
 }
 
 type Postingan struct {
-	ID        int32            `json:"id"`
-	Judul     string           `json:"judul"`
-	Deskripsi string           `json:"deskripsi"`
-	Lampiran  []string         `json:"lampiran"`
-	Tipe      TipePost         `json:"tipe"`
-	KelasID   int32            `json:"kelas_id"`
-	Dibuat    pgtype.Timestamp `json:"dibuat"`
+	ID         int32            `json:"id"`
+	Judul      string           `json:"judul"`
+	Deskripsi  string           `json:"deskripsi"`
+	Lampiran   []string         `json:"lampiran"`
+	Tipe       TipePost         `json:"tipe"`
+	PenggunaID int32            `json:"pengguna_id"`
+	KelasID    int32            `json:"kelas_id"`
+	Dibuat     pgtype.Timestamp `json:"dibuat"`
 }
