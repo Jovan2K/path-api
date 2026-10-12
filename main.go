@@ -41,6 +41,7 @@ func main() {
 
 	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
+	utils.CatchAll(e)
 
 	authHandler := auth.New(q)
 	authHandler.Routes(e)
