@@ -82,6 +82,45 @@ func (q *Queries) GetPengguna(ctx context.Context, id int32) (GetPenggunaRow, er
 	return i, err
 }
 
+const listPostingan = `-- name: ListPostingan :many
+SELECT id, judul, deskripsi, lampiran, tipe, pengguna_id, kelas_id, dibuat FROM postingan WHERE tipe = $1 AND pengguna_id = $2 AND kelas_id = $3
+`
+
+type ListPostinganParams struct {
+	Tipe       TipePost `json:"tipe"`
+	PenggunaID int32    `json:"pengguna_id"`
+	KelasID    int32    `json:"kelas_id"`
+}
+
+func (q *Queries) ListPostingan(ctx context.Context, arg ListPostinganParams) ([]Postingan, error) {
+	rows, err := q.db.Query(ctx, listPostingan, arg.Tipe, arg.PenggunaID, arg.KelasID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Postingan
+	for rows.Next() {
+		var i Postingan
+		if err := rows.Scan(
+			&i.ID,
+			&i.Judul,
+			&i.Deskripsi,
+			&i.Lampiran,
+			&i.Tipe,
+			&i.PenggunaID,
+			&i.KelasID,
+			&i.Dibuat,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateEmailPengguna = `-- name: UpdateEmailPengguna :one
 UPDATE pengguna SET email = $2 WHERE id = $1 RETURNING id, username, email, phone, profile_picture, password, dibuat
 `

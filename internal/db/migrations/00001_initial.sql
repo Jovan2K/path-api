@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS "postingan" (
 	"deskripsi" TEXT NOT NULL,
 	"lampiran" TEXT ARRAY,
 	"tipe" TIPE_POST NOT NULL,
+	"pengguna_id" INTEGER NOT NULL,
 	"kelas_id" INTEGER NOT NULL,
 	"dibuat" TIMESTAMP NOT NULL DEFAULT now()
 );
@@ -51,7 +52,6 @@ CREATE TABLE IF NOT EXISTS "pengumpulan_tugas" (
 	"id" SERIAL PRIMARY KEY,
 	"postingan_id" INTEGER NOT NULL,
 	"lampiran" TEXT ARRAY,
-	"pengguna_id" INTEGER NOT NULL,
 	"dibuat" TIMESTAMP NOT NULL DEFAULT now()
 );
 
@@ -70,7 +70,7 @@ ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE "postingan"
 ADD FOREIGN KEY("kelas_id") REFERENCES "kelas"("id")
 ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "pengumpulan_tugas"
+ALTER TABLE "postingan"
 ADD FOREIGN KEY("pengguna_id") REFERENCES "pengguna"("id")
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 
