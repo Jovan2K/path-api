@@ -1,68 +1,193 @@
+basePath: /
 definitions:
-  db.Pengguna:
+  auth.LoginFailure400Response:
     properties:
-      dibuat:
-        $ref: '#/definitions/pgtype.Timestamp'
+      message:
+        example: username atau password salah
+        type: string
+    type: object
+  auth.LoginFailure500Response:
+    properties:
+      message:
+        example: gagal memproses login
+        type: string
+    type: object
+  auth.LoginRequest:
+    properties:
       email:
+        example: johndoe@example.com
         type: string
-      id:
-        type: integer
       password:
+        example: secret123
+        minLength: 8
         type: string
-      phone:
+    required:
+    - email
+    - password
+    type: object
+  auth.RegisterFailure400Response:
+    properties:
+      message:
+        example: email sudah terdaftarkan
         type: string
-      profile_picture:
+    type: object
+  auth.RegisterFailure500Response:
+    properties:
+      message:
+        example: gagal memproses register
+        type: string
+    type: object
+  auth.RegisterRequest:
+    properties:
+      email:
+        example: johndoe@example.com
+        type: string
+      password:
+        example: secret123
+        minLength: 8
         type: string
       username:
+        example: John Doe
         type: string
+    required:
+    - email
+    - password
+    - username
     type: object
-  pgtype.InfinityModifier:
-    enum:
-    - 1
-    - 0
-    - -1
-    format: int32
-    type: integer
-    x-enum-varnames:
-    - Infinity
-    - Finite
-    - NegativeInfinity
-  pgtype.Timestamp:
+  auth.SuccessResponse:
     properties:
-      infinityModifier:
-        $ref: '#/definitions/pgtype.InfinityModifier'
-      time:
-        description: Time zone will be ignored when encoding to PostgreSQL.
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
-      valid:
-        type: boolean
     type: object
+  pengguna.GetPenggunaFailure400Response:
+    properties:
+      message:
+        example: Data pengguna tidak ditemukan
+        type: string
+    type: object
+  pengguna.GetPenggunaFailure401Response:
+    properties:
+      message:
+        example: Tidak dapat mengakses data klaim
+        type: string
+    type: object
+  pengguna.GetPenggunaSuccessResponse:
+    properties:
+      email:
+        example: johndoe@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      phone:
+        example: "123123123"
+        type: string
+      profile_picture:
+        example: joe_mama.jpg
+        type: string
+      username:
+        example: John Doe
+        type: string
+    type: object
+host: api.patclass.app
 info:
-  contact:
-    email: mbkmpath@gmail.com
-    name: MBKM PATH
-  description: Personal Adaptive Teaching Hub
+  contact: {}
+  description: This is documentation for PATH API.
   license:
     name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: PATH API
+    url: https://raw.githubusercontent.com/kelompokms/path-api/refs/heads/main/LICENSE
+  title: PATH API Documentation
   version: "1.0"
 paths:
-  /pengguna:
-    get:
-      description: Mendapatkan semua data pengguna
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login pengguna baru dengan Email dan Password, mengembalikan JWT
+        token untuk Bearer Auth
+      parameters:
+      - description: Login Request Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/db.Pengguna'
-        "500":
-          description: gagal mendapatkan data pengguna
+            $ref: '#/definitions/auth.SuccessResponse'
+        "400":
+          description: Bad Request
           schema:
-            type: string
-      summary: List Pengguna
+            $ref: '#/definitions/auth.LoginFailure400Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/auth.LoginFailure500Response'
+      summary: Login pengguna
       tags:
-      - pengguna
+      - Auth
+  /pengguna:
+    get:
+      description: Mendapatkan informasi pengguna dengan parsing ID pengguna dari
+        token
+      parameters:
+      - description: Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pengguna.GetPenggunaSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pengguna.GetPenggunaFailure400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pengguna.GetPenggunaFailure401Response'
+      summary: Mendapatkan informasi pengguna
+      tags:
+      - Pengguna
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Mendaftarkan pengguna baru dengan Username, Email dan Password,
+        mengembalikan JWT token untuk Bearer Auth
+      parameters:
+      - description: Register Request Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auth.RegisterFailure400Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/auth.RegisterFailure500Response'
+      summary: Register pengguna baru
+      tags:
+      - Auth
 swagger: "2.0"

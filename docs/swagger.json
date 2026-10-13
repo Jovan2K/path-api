@@ -1,40 +1,146 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Personal Adaptive Teaching Hub",
-        "title": "PATH API",
-        "contact": {
-            "name": "MBKM PATH",
-            "email": "mbkmpath@gmail.com"
-        },
+        "description": "This is documentation for PATH API.",
+        "title": "PATH API Documentation",
+        "contact": {},
         "license": {
             "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+            "url": "https://raw.githubusercontent.com/kelompokms/path-api/refs/heads/main/LICENSE"
         },
         "version": "1.0"
     },
+    "host": "api.patclass.app",
+    "basePath": "/",
     "paths": {
-        "/pengguna": {
-            "get": {
-                "description": "Mendapatkan semua data pengguna",
+        "/login": {
+            "post": {
+                "description": "Login pengguna baru dengan Email dan Password, mengembalikan JWT token untuk Bearer Auth",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "pengguna"
+                    "Auth"
                 ],
-                "summary": "List Pengguna",
+                "summary": "Login pengguna",
+                "parameters": [
+                    {
+                        "description": "Login Request Payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/db.Pengguna"
+                            "$ref": "#/definitions/auth.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginFailure400Response"
                         }
                     },
                     "500": {
-                        "description": "gagal mendapatkan data pengguna",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/auth.LoginFailure500Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/pengguna": {
+            "get": {
+                "description": "Mendapatkan informasi pengguna dengan parsing ID pengguna dari token",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pengguna"
+                ],
+                "summary": "Mendapatkan informasi pengguna",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pengguna.GetPenggunaSuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pengguna.GetPenggunaFailure400Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pengguna.GetPenggunaFailure401Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Mendaftarkan pengguna baru dengan Username, Email dan Password, mengembalikan JWT token untuk Bearer Auth",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register pengguna baru",
+                "parameters": [
+                    {
+                        "description": "Register Request Payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auth.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/auth.RegisterFailure400Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/auth.RegisterFailure500Response"
                         }
                     }
                 }
@@ -42,58 +148,132 @@
         }
     },
     "definitions": {
-        "db.Pengguna": {
+        "auth.LoginFailure400Response": {
             "type": "object",
             "properties": {
-                "dibuat": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "profile_picture": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
+                "message": {
+                    "type": "string",
+                    "example": "username atau password salah"
                 }
             }
         },
-        "pgtype.InfinityModifier": {
-            "type": "integer",
-            "format": "int32",
-            "enum": [
-                1,
-                0,
-                -1
-            ],
-            "x-enum-varnames": [
-                "Infinity",
-                "Finite",
-                "NegativeInfinity"
-            ]
-        },
-        "pgtype.Timestamp": {
+        "auth.LoginFailure500Response": {
             "type": "object",
             "properties": {
-                "infinityModifier": {
-                    "$ref": "#/definitions/pgtype.InfinityModifier"
+                "message": {
+                    "type": "string",
+                    "example": "gagal memproses login"
+                }
+            }
+        },
+        "auth.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "johndoe@example.com"
                 },
-                "time": {
-                    "description": "Time zone will be ignored when encoding to PostgreSQL.",
-                    "type": "string"
+                "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "secret123"
+                }
+            }
+        },
+        "auth.RegisterFailure400Response": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "email sudah terdaftarkan"
+                }
+            }
+        },
+        "auth.RegisterFailure500Response": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "gagal memproses register"
+                }
+            }
+        },
+        "auth.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "johndoe@example.com"
                 },
-                "valid": {
-                    "type": "boolean"
+                "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "secret123"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "John Doe"
+                }
+            }
+        },
+        "auth.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
+        "pengguna.GetPenggunaFailure400Response": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Data pengguna tidak ditemukan"
+                }
+            }
+        },
+        "pengguna.GetPenggunaFailure401Response": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Tidak dapat mengakses data klaim"
+                }
+            }
+        },
+        "pengguna.GetPenggunaSuccessResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "johndoe@example.com"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "123123123"
+                },
+                "profile_picture": {
+                    "type": "string",
+                    "example": "joe_mama.jpg"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "John Doe"
                 }
             }
         }

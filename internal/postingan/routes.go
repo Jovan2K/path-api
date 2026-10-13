@@ -7,5 +7,3 @@ func (h *Handler) Routes(e *echo.Group) {
 
 	postingan.GET("", h.ListPostingan)
 }
-
-

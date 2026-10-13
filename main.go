@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	_ "path-api/docs"
 	"path-api/internal/auth"
 	"path-api/internal/db"
 	"path-api/internal/kelas"
@@ -14,17 +15,18 @@ import (
 	echojwt "github.com/labstack/echo-jwt/v5"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger/v2"
 )
 
-// @title PATH API
-// @version 1.0
-// @description Personal Adaptive Teaching Hub
+//	@title			PATH API Documentation
+//	@version		1.0
+//	@description	This is documentation for PATH API.
 
-// @contact.name MBKM PATH
-// @contact.email mbkmpath@gmail.com
+//	@license.name	Apache 2.0
+//	@license.url	https://raw.githubusercontent.com/kelompokms/path-api/refs/heads/main/LICENSE
 
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @host		api.patclass.app
+// @BasePath	/
 func main() {
 	ctx := context.Background()
 	q, pool, dbConn, err := db.Connect(ctx)
@@ -41,6 +43,9 @@ func main() {
 
 	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
+
+	e.GET("/docs/*", echoSwagger.WrapHandler)
+
 	utils.CatchAll(e)
 
 	authHandler := auth.New(q)
