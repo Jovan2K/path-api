@@ -11,6 +11,31 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createKelas = `-- name: CreateKelas :exec
+INSERT INTO kelas (nama, tingkat, mata_pelajaran, pembuat, kode_kelas) 
+VALUES (  $1, $2, $3, $4, $5)
+RETURNING id
+`
+
+type CreateKelasParams struct {
+	Nama          string      `json:"nama"`
+	Tingkat       pgtype.Text `json:"tingkat"`
+	MataPelajaran pgtype.Text `json:"mata_pelajaran"`
+	Pembuat       int32       `json:"pembuat"`
+	KodeKelas     string      `json:"kode_kelas"`
+}
+
+func (q *Queries) CreateKelas(ctx context.Context, arg CreateKelasParams) error {
+	_, err := q.db.Exec(ctx, createKelas,
+		arg.Nama,
+		arg.Tingkat,
+		arg.MataPelajaran,
+		arg.Pembuat,
+		arg.KodeKelas,
+	)
+	return err
+}
+
 const createPengguna = `-- name: CreatePengguna :one
 INSERT INTO pengguna (username, email, password)
 VALUES ($1, $2, $3)

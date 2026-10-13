@@ -1,8 +1,10 @@
 package kelas
 
 import (
+	"encoding/json"
 	"net/http"
 	"path-api/internal/db"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v5"
 )
 
@@ -29,12 +31,32 @@ func (h *Handler) Create(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Format input JSON tidak valid")
 	}
 
-	// Validasi kolom wajib
-	if req.Nama == "" || req.KodeKelas == "" || req.Pembuat == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "Nama kelas, kode kelas, dan ID pembuat wajib diisi")
+	// --- MULAI KODE BARU: Ambil ID dari JWT ---
+	// "user" adalah key default dari Echo JWT Middleware
+	userToken, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak ditemukan")
 	}
 
-	// Panggil logic layer dengan mengirimkan h.db
+	// Ini mencegah error akibat bentrok tipe data atau versi JWT
+	claimsJSON, _ := json.Marshal(userToken.Claims)
+	var claims map[string]interface{}
+	json.Unmarshal(claimsJSON, &claims)
+
+	// Ambil ID menggunakan key "user_id" (sesuai format token aslimu)
+	idClaim, ok := claims["user_id"].(float64)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Key 'user_id' tidak ditemukan di token")
+	}
+
+	// Timpa req.Pembuat dengan ID asli dari token
+	req.Pembuat = int32(idClaim)
+	// --- SELESAI KODE BARU ---
+	// Validasi kolom wajib (req.Pembuat sudah pasti terisi dari token)
+	if req.Nama == "" || req.KodeKelas == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Nama kelas dan kode kelas wajib diisi")
+	}
+
 	err := BuatKelasLogic(c.Request().Context(), h.db, req)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal membuat kelas: "+err.Error())

@@ -24,13 +24,11 @@ UPDATE pengguna SET phone = $2 WHERE id = $1 RETURNING *;
 -- name: UpdateProfilePicturePengguna :one
 UPDATE pengguna SET profile_picture = $2 WHERE id = $1 RETURNING *;
 
-<<<<<<< HEAD
--- name: CreateKelas :one
-INSERT INTO kelas (nama, tingkat, mata_pelajaran, pembuat, kode_kelas)
-VALUES ($1, $2, $3, $4, $5)
+-- name: CreateKelas :exec
+INSERT INTO kelas (nama, tingkat, mata_pelajaran, pembuat, kode_kelas) 
+VALUES (  $1, $2, $3, $4, $5)
 RETURNING id;
-=======
+
 -- name: ListPostingan :many
 SELECT * FROM postingan WHERE tipe = $1 AND pengguna_id = $2 AND kelas_id = $3;
 
->>>>>>> 44dbf50dc6e3bce119655133a0df12bfc3d6ab19
