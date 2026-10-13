@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"path-api/internal/db"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v5"
 )
@@ -46,11 +47,11 @@ func (h *Handler) Create(c *echo.Context) error {
 	}
 
 	req.Pembuat = int32(idClaim)
-	if req.Nama == "" || req.KodeKelas == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Nama kelas dan kode kelas wajib diisi")
+	if req.Nama == "" {
+    return echo.NewHTTPError(http.StatusBadRequest, "Nama kelas wajib diisi")
 	}
 
-	err := BuatKelasLogic(c.Request().Context(), h.db, req)
+	err := BuatKelasLogic(c.Request().Context(), h.db, req, req.Pembuat)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal membuat kelas: "+err.Error())
 	}
@@ -101,7 +102,7 @@ func (h *Handler) Join(c *echo.Context) error {
 }
 
 func (h *Handler) Leave(c *echo.Context) error {
-	var req JoinKelasRequest 
+	var req JoinKelasRequest // Bisa menggunakan struct yang sama karena hanya butuh "kode_kelas"
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Format input JSON tidak valid")
 	}

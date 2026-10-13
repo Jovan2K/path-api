@@ -2,9 +2,14 @@ package kelas
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/http"
 	"path-api/internal/db"
+	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/labstack/echo/v5"
@@ -13,15 +18,33 @@ import (
 func (h *Handler) List(c *echo.Context) error {
 	return echo.NewHTTPError(http.StatusBadRequest, "tidak ada.")
 }
-func BuatKelasLogic(ctx context.Context, queries *db.Queries, req CreateKelasRequest) error {
+
+func generateHashKode(namaKelas string, pembuatID int32) string {
+	dataUnik := fmt.Sprintf("%s-%d-%d", namaKelas, pembuatID, time.Now().UnixNano())
+
+	hash := sha256.Sum256([]byte(dataUnik))
+
+	hashString := hex.EncodeToString(hash[:])
+
+	if len(hashString) >= 6 {
+		return strings.ToUpper(hashString[:6])
+	}
+
+	return "CLS123"
+}
+
+func BuatKelasLogic(ctx context.Context, queries *db.Queries, req CreateKelasRequest, pembuatID int32) error {
+	kodeKelas := req.KodeKelas
+	if kodeKelas == "" {
+		kodeKelas = generateHashKode(req.Nama, pembuatID)
+	}
+
 	err := queries.CreateKelas(ctx, db.CreateKelasParams{
-		Nama: req.Nama,
-
-		Tingkat:       pgtype.Text{String: req.Tingkat, Valid: req.Tingkat != ""},
-		MataPelajaran: pgtype.Text{String: req.MataPelajaran, Valid: req.MataPelajaran != ""},
-
-		Pembuat:   req.Pembuat,
-		KodeKelas: req.KodeKelas,
+		Nama:          req.Nama,
+		Tingkat:       pgtype.Text{String: req.Tingkat, Valid: true},
+		MataPelajaran: pgtype.Text{String: req.MataPelajaran, Valid: true},
+		Pembuat:       pembuatID,
+		KodeKelas:     kodeKelas,
 	})
 
 	return err
