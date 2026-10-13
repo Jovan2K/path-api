@@ -23,16 +23,16 @@ func (h *Handler) Register(c *echo.Context) error {
 		return utils.ValidationErrorHandler(c, err)
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		log.Println("Error hashing password:", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memproses password")
-	}
-
 	_, err = h.db.GetPasswordPenggunaByEmail(c.Request().Context(), req.Email)
 	if err == nil {
 		log.Println("email sudah terdaftarkan")
 		return echo.NewHTTPError(http.StatusBadRequest, "email sudah terdaftarkan!")
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Println("Error hashing password:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memproses password")
 	}
 
 	userID, err := h.db.CreatePengguna(c.Request().Context(), db.CreatePenggunaParams{

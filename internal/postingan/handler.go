@@ -11,3 +11,8 @@ type Handler struct {
 func New(db *db.Queries) *Handler {
 	return &Handler{db}
 }
+
+type ListPostinganRequest struct {
+	Tipe    db.TipePost `query:"tipe" validate:"required,oneof=tugas materi"`
+	KelasID int32       `param:"kelasID" validate:"required"`
+}
