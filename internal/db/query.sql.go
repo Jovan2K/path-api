@@ -55,6 +55,25 @@ func (q *Queries) CreatePengguna(ctx context.Context, arg CreatePenggunaParams) 
 	return id, err
 }
 
+const getKelasByKode = `-- name: GetKelasByKode :one
+SELECT id, nama, tingkat, mata_pelajaran, pembuat, kode_kelas, dibuat FROM kelas WHERE kode_kelas = $1
+`
+
+func (q *Queries) GetKelasByKode(ctx context.Context, kodeKelas string) (Kela, error) {
+	row := q.db.QueryRow(ctx, getKelasByKode, kodeKelas)
+	var i Kela
+	err := row.Scan(
+		&i.ID,
+		&i.Nama,
+		&i.Tingkat,
+		&i.MataPelajaran,
+		&i.Pembuat,
+		&i.KodeKelas,
+		&i.Dibuat,
+	)
+	return i, err
+}
+
 const getPasswordPenggunaByEmail = `-- name: GetPasswordPenggunaByEmail :one
 SELECT id, password FROM pengguna WHERE email = $1
 `
@@ -105,6 +124,22 @@ func (q *Queries) GetPengguna(ctx context.Context, id int32) (GetPenggunaRow, er
 		&i.ProfilePicture,
 	)
 	return i, err
+}
+
+const joinKelas = `-- name: JoinKelas :exec
+INSERT INTO anggota_kelas (pengguna_id, kelas_id, role) 
+VALUES ($1, $2, $3)
+`
+
+type JoinKelasParams struct {
+	PenggunaID int32     `json:"pengguna_id"`
+	KelasID    int32     `json:"kelas_id"`
+	Role       RoleKelas `json:"role"`
+}
+
+func (q *Queries) JoinKelas(ctx context.Context, arg JoinKelasParams) error {
+	_, err := q.db.Exec(ctx, joinKelas, arg.PenggunaID, arg.KelasID, arg.Role)
+	return err
 }
 
 const listPostingan = `-- name: ListPostingan :many

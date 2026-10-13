@@ -31,28 +31,21 @@ func (h *Handler) Create(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Format input JSON tidak valid")
 	}
 
-	// --- MULAI KODE BARU: Ambil ID dari JWT ---
-	// "user" adalah key default dari Echo JWT Middleware
 	userToken, ok := c.Get("user").(*jwt.Token)
 	if !ok {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak ditemukan")
 	}
 
-	// Ini mencegah error akibat bentrok tipe data atau versi JWT
 	claimsJSON, _ := json.Marshal(userToken.Claims)
 	var claims map[string]interface{}
 	json.Unmarshal(claimsJSON, &claims)
 
-	// Ambil ID menggunakan key "user_id" (sesuai format token aslimu)
 	idClaim, ok := claims["user_id"].(float64)
 	if !ok {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Key 'user_id' tidak ditemukan di token")
 	}
 
-	// Timpa req.Pembuat dengan ID asli dari token
 	req.Pembuat = int32(idClaim)
-	// --- SELESAI KODE BARU ---
-	// Validasi kolom wajib (req.Pembuat sudah pasti terisi dari token)
 	if req.Nama == "" || req.KodeKelas == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "Nama kelas dan kode kelas wajib diisi")
 	}
@@ -64,5 +57,46 @@ func (h *Handler) Create(c *echo.Context) error {
 
 	return c.JSON(http.StatusCreated, map[string]string{
 		"message": "Kelas berhasil dibuat",
+	})
+}
+
+type JoinKelasRequest struct {
+	KodeKelas string `json:"kode_kelas"`
+}
+
+func (h *Handler) Join(c *echo.Context) error {
+	var req JoinKelasRequest
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Format input JSON tidak valid")
+	}
+
+	if req.KodeKelas == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Kode kelas wajib diisi")
+	}
+
+	// Ambil ID user secara aman dari JWT (menggunakan trik yang sama seperti sebelumnya)
+	userToken, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak ditemukan")
+	}
+	
+	claimsJSON, _ := json.Marshal(userToken.Claims)
+	var claims map[string]interface{}
+	json.Unmarshal(claimsJSON, &claims)
+
+	idClaim, ok := claims["user_id"].(float64)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Gagal membaca ID dari token")
+	}
+	userID := int32(idClaim)
+
+	// Panggil logic join kelas
+	err := JoinKelasLogic(c.Request().Context(), h.db, userID, req.KodeKelas)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Berhasil bergabung ke dalam kelas",
 	})
 }

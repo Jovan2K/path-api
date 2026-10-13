@@ -29,6 +29,13 @@ INSERT INTO kelas (nama, tingkat, mata_pelajaran, pembuat, kode_kelas)
 VALUES (  $1, $2, $3, $4, $5)
 RETURNING id;
 
+-- name: GetKelasByKode :one
+SELECT * FROM kelas WHERE kode_kelas = $1;
+
+-- name: JoinKelas :exec
+INSERT INTO anggota_kelas (pengguna_id, kelas_id, role) 
+VALUES ($1, $2, $3);
+
 -- name: ListPostingan :many
 SELECT * FROM postingan WHERE tipe = $1 AND pengguna_id = $2 AND kelas_id = $3;
 
