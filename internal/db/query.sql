@@ -36,6 +36,16 @@ SELECT * FROM kelas WHERE kode_kelas = $1;
 INSERT INTO anggota_kelas (pengguna_id, kelas_id, role) 
 VALUES ($1, $2, $3);
 
+-- name: CekAnggotaKelas :one
+SELECT EXISTS(
+    SELECT 1 FROM anggota_kelas 
+    WHERE pengguna_id = $1 AND kelas_id = $2
+);
+
+-- name: LeaveKelas :exec
+DELETE FROM anggota_kelas 
+WHERE kelas_id = $1 AND pengguna_id = $2;
+
 -- name: ListPostingan :many
 SELECT * FROM postingan WHERE tipe = $1 AND pengguna_id = $2 AND kelas_id = $3;
 

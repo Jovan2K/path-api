@@ -74,7 +74,6 @@ func (h *Handler) Join(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Kode kelas wajib diisi")
 	}
 
-	// Ambil ID user secara aman dari JWT (menggunakan trik yang sama seperti sebelumnya)
 	userToken, ok := c.Get("user").(*jwt.Token)
 	if !ok {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak ditemukan")
@@ -98,5 +97,41 @@ func (h *Handler) Join(c *echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "Berhasil bergabung ke dalam kelas",
+	})
+}
+
+func (h *Handler) Leave(c *echo.Context) error {
+	var req JoinKelasRequest 
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Format input JSON tidak valid")
+	}
+
+	if req.KodeKelas == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Kode kelas wajib diisi")
+	}
+
+	// Ambil ID user secara aman dari JWT
+	userToken, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak ditemukan")
+	}
+	
+	claimsJSON, _ := json.Marshal(userToken.Claims)
+	var claims map[string]interface{}
+	json.Unmarshal(claimsJSON, &claims)
+
+	idClaim, ok := claims["user_id"].(float64)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Gagal membaca ID dari token")
+	}
+	userID := int32(idClaim)
+
+	err := LeaveKelasLogic(c.Request().Context(), h.db, userID, req.KodeKelas)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Gagal keluar dari kelas: "+err.Error())
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Berhasil keluar dari kelas",
 	})
 }

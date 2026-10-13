@@ -11,6 +11,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const cekAnggotaKelas = `-- name: CekAnggotaKelas :one
+SELECT EXISTS(
+    SELECT 1 FROM anggota_kelas 
+    WHERE pengguna_id = $1 AND kelas_id = $2
+)
+`
+
+type CekAnggotaKelasParams struct {
+	PenggunaID int32 `json:"pengguna_id"`
+	KelasID    int32 `json:"kelas_id"`
+}
+
+func (q *Queries) CekAnggotaKelas(ctx context.Context, arg CekAnggotaKelasParams) (bool, error) {
+	row := q.db.QueryRow(ctx, cekAnggotaKelas, arg.PenggunaID, arg.KelasID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createKelas = `-- name: CreateKelas :exec
 INSERT INTO kelas (nama, tingkat, mata_pelajaran, pembuat, kode_kelas) 
 VALUES (  $1, $2, $3, $4, $5)
@@ -139,6 +158,21 @@ type JoinKelasParams struct {
 
 func (q *Queries) JoinKelas(ctx context.Context, arg JoinKelasParams) error {
 	_, err := q.db.Exec(ctx, joinKelas, arg.PenggunaID, arg.KelasID, arg.Role)
+	return err
+}
+
+const leaveKelas = `-- name: LeaveKelas :exec
+DELETE FROM anggota_kelas 
+WHERE kelas_id = $1 AND pengguna_id = $2
+`
+
+type LeaveKelasParams struct {
+	KelasID    int32 `json:"kelas_id"`
+	PenggunaID int32 `json:"pengguna_id"`
+}
+
+func (q *Queries) LeaveKelas(ctx context.Context, arg LeaveKelasParams) error {
+	_, err := q.db.Exec(ctx, leaveKelas, arg.KelasID, arg.PenggunaID)
 	return err
 }
 
