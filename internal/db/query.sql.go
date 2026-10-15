@@ -30,6 +30,44 @@ func (q *Queries) CreatePengguna(ctx context.Context, arg CreatePenggunaParams) 
 	return id, err
 }
 
+const createPostingan = `-- name: CreatePostingan :one
+INSERT INTO postingan (judul, deskripsi, lampiran, tipe, pengguna_id, kelas_id)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, judul, deskripsi, lampiran, tipe, pengguna_id, kelas_id, dibuat
+`
+
+type CreatePostinganParams struct {
+	Judul      string   `json:"judul"`
+	Deskripsi  string   `json:"deskripsi"`
+	Lampiran   []string `json:"lampiran"`
+	Tipe       TipePost `json:"tipe"`
+	PenggunaID int32    `json:"pengguna_id"`
+	KelasID    int32    `json:"kelas_id"`
+}
+
+func (q *Queries) CreatePostingan(ctx context.Context, arg CreatePostinganParams) (Postingan, error) {
+	row := q.db.QueryRow(ctx, createPostingan,
+		arg.Judul,
+		arg.Deskripsi,
+		arg.Lampiran,
+		arg.Tipe,
+		arg.PenggunaID,
+		arg.KelasID,
+	)
+	var i Postingan
+	err := row.Scan(
+		&i.ID,
+		&i.Judul,
+		&i.Deskripsi,
+		&i.Lampiran,
+		&i.Tipe,
+		&i.PenggunaID,
+		&i.KelasID,
+		&i.Dibuat,
+	)
+	return i, err
+}
+
 const getPasswordPenggunaByEmail = `-- name: GetPasswordPenggunaByEmail :one
 SELECT id, password FROM pengguna WHERE email = $1
 `
@@ -83,17 +121,29 @@ func (q *Queries) GetPengguna(ctx context.Context, id int32) (GetPenggunaRow, er
 }
 
 const listPostingan = `-- name: ListPostingan :many
-SELECT id, judul, deskripsi, lampiran, tipe, pengguna_id, kelas_id, dibuat FROM postingan WHERE tipe = $1 AND pengguna_id = $2 AND kelas_id = $3
+SELECT p.id, p.judul, p.deskripsi, p.lampiran, p.tipe, p.pengguna_id, p.kelas_id, p.dibuat 
+FROM postingan p
+JOIN kelas k ON p.kelas_id = k.id
+WHERE p.tipe = $1 
+  AND p.pengguna_id = $2 
+  AND p.kelas_id = $3 
+  AND k.mata_pelajaran = $4
 `
 
 type ListPostinganParams struct {
-	Tipe       TipePost `json:"tipe"`
-	PenggunaID int32    `json:"pengguna_id"`
-	KelasID    int32    `json:"kelas_id"`
+	Tipe          TipePost    `json:"tipe"`
+	PenggunaID    int32       `json:"pengguna_id"`
+	KelasID       int32       `json:"kelas_id"`
+	MataPelajaran pgtype.Text `json:"mata_pelajaran"`
 }
 
 func (q *Queries) ListPostingan(ctx context.Context, arg ListPostinganParams) ([]Postingan, error) {
-	rows, err := q.db.Query(ctx, listPostingan, arg.Tipe, arg.PenggunaID, arg.KelasID)
+	rows, err := q.db.Query(ctx, listPostingan,
+		arg.Tipe,
+		arg.PenggunaID,
+		arg.KelasID,
+		arg.MataPelajaran,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -178,6 +228,51 @@ func (q *Queries) UpdatePhonePengguna(ctx context.Context, arg UpdatePhonePenggu
 		&i.Phone,
 		&i.ProfilePicture,
 		&i.Password,
+		&i.Dibuat,
+	)
+	return i, err
+}
+
+const updatePostingan = `-- name: UpdatePostingan :one
+UPDATE postingan
+SET 
+    judul = COALESCE($4, judul),
+    deskripsi = COALESCE($5, deskripsi),
+    lampiran = COALESCE($6, lampiran),
+    tipe = COALESCE($7, tipe)
+WHERE id = $1 AND kelas_id = $2 AND pengguna_id = $3
+RETURNING id, judul, deskripsi, lampiran, tipe, pengguna_id, kelas_id, dibuat
+`
+
+type UpdatePostinganParams struct {
+	ID         int32        `json:"id"`
+	KelasID    int32        `json:"kelas_id"`
+	PenggunaID int32        `json:"pengguna_id"`
+	Judul      pgtype.Text  `json:"judul"`
+	Deskripsi  pgtype.Text  `json:"deskripsi"`
+	Lampiran   []string     `json:"lampiran"`
+	Tipe       NullTipePost `json:"tipe"`
+}
+
+func (q *Queries) UpdatePostingan(ctx context.Context, arg UpdatePostinganParams) (Postingan, error) {
+	row := q.db.QueryRow(ctx, updatePostingan,
+		arg.ID,
+		arg.KelasID,
+		arg.PenggunaID,
+		arg.Judul,
+		arg.Deskripsi,
+		arg.Lampiran,
+		arg.Tipe,
+	)
+	var i Postingan
+	err := row.Scan(
+		&i.ID,
+		&i.Judul,
+		&i.Deskripsi,
+		&i.Lampiran,
+		&i.Tipe,
+		&i.PenggunaID,
+		&i.KelasID,
 		&i.Dibuat,
 	)
 	return i, err
