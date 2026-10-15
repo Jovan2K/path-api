@@ -24,15 +24,15 @@ CREATE TABLE IF NOT EXISTS "kelas" (
 	"nama" TEXT NOT NULL,
 	"tingkat" TEXT,
 	"mata_pelajaran" TEXT,
-	"pembuat" INTEGER NOT NULL,
+	"pembuat" INTEGER REFERENCES pengguna (id) NOT NULL,
 	"kode_kelas" VARCHAR(6) NOT NULL,
 	"dibuat" TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "anggota_kelas" (
 	"id" SERIAL PRIMARY KEY,
-	"pengguna_id" INTEGER NOT NULL,
-	"kelas_id" INTEGER NOT NULL,
+	"pengguna_id" INTEGER REFERENCES pengguna (id) NOT NULL,
+	"kelas_id" INTEGER REFERENCES kelas (id) NOT NULL,
 	"role" ROLE_KELAS NOT NULL,
 	"dibuat" TIMESTAMP NOT NULL DEFAULT now()
 );
@@ -40,39 +40,20 @@ CREATE TABLE IF NOT EXISTS "anggota_kelas" (
 CREATE TABLE IF NOT EXISTS "postingan" (
 	"id" SERIAL PRIMARY KEY,
 	"judul" TEXT NOT NULL,
-	"deskripsi" TEXT NOT NULL,
+	"deskripsi" TEXT,
 	"lampiran" TEXT ARRAY,
 	"tipe" TIPE_POST NOT NULL,
-	"pengguna_id" INTEGER NOT NULL,
-	"kelas_id" INTEGER NOT NULL,
+	"pengguna_id" INTEGER REFERENCES pengguna (id) NOT NULL,
+	"kelas_id" INTEGER REFERENCES kelas (id) NOT NULL,
 	"dibuat" TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "pengumpulan_tugas" (
 	"id" SERIAL PRIMARY KEY,
-	"postingan_id" INTEGER NOT NULL,
+	"postingan_id" INTEGER REFERENCES postingan (id) NOT NULL,
 	"lampiran" TEXT ARRAY,
 	"dibuat" TIMESTAMP NOT NULL DEFAULT now()
 );
-
-ALTER TABLE "pengumpulan_tugas"
-ADD FOREIGN KEY("postingan_id") REFERENCES "postingan"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "kelas"
-ADD FOREIGN KEY("pembuat") REFERENCES "pengguna"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "anggota_kelas"
-ADD FOREIGN KEY("pengguna_id") REFERENCES "pengguna"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "anggota_kelas"
-ADD FOREIGN KEY("kelas_id") REFERENCES "kelas"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "postingan"
-ADD FOREIGN KEY("kelas_id") REFERENCES "kelas"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "postingan"
-ADD FOREIGN KEY("pengguna_id") REFERENCES "pengguna"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
 
 -- +goose Down
 DROP TABLE pengumpulan_tugas;

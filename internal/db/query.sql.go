@@ -67,6 +67,7 @@ type CreatePenggunaParams struct {
 	Password string `json:"password"`
 }
 
+// -- PENGGUNA ----
 func (q *Queries) CreatePengguna(ctx context.Context, arg CreatePenggunaParams) (int32, error) {
 	row := q.db.QueryRow(ctx, createPengguna, arg.Username, arg.Email, arg.Password)
 	var id int32
@@ -102,6 +103,7 @@ type GetPasswordPenggunaByEmailRow struct {
 	Password string `json:"password"`
 }
 
+// -- AUTH ----
 func (q *Queries) GetPasswordPenggunaByEmail(ctx context.Context, email string) (GetPasswordPenggunaByEmailRow, error) {
 	row := q.db.QueryRow(ctx, getPasswordPenggunaByEmail, email)
 	var i GetPasswordPenggunaByEmailRow
@@ -177,17 +179,30 @@ func (q *Queries) LeaveKelas(ctx context.Context, arg LeaveKelasParams) error {
 }
 
 const listPostingan = `-- name: ListPostingan :many
-SELECT id, judul, deskripsi, lampiran, tipe, pengguna_id, kelas_id, dibuat FROM postingan WHERE tipe = $1 AND pengguna_id = $2 AND kelas_id = $3
+SELECT p.id, p.judul, p.deskripsi, p.lampiran, p.tipe, p.pengguna_id, p.kelas_id, p.dibuat
+FROM postingan p
+JOIN kelas k ON p.kelas_id = k.id
+WHERE p.tipe = $1
+  AND p.pengguna_id = $2
+  AND p.kelas_id = $3
+  AND k.mata_pelajaran = $4
 `
 
 type ListPostinganParams struct {
-	Tipe       TipePost `json:"tipe"`
-	PenggunaID int32    `json:"pengguna_id"`
-	KelasID    int32    `json:"kelas_id"`
+	Tipe          TipePost    `json:"tipe"`
+	PenggunaID    int32       `json:"pengguna_id"`
+	KelasID       int32       `json:"kelas_id"`
+	MataPelajaran pgtype.Text `json:"mata_pelajaran"`
 }
 
+// -- POSTINGAN ----
 func (q *Queries) ListPostingan(ctx context.Context, arg ListPostinganParams) ([]Postingan, error) {
-	rows, err := q.db.Query(ctx, listPostingan, arg.Tipe, arg.PenggunaID, arg.KelasID)
+	rows, err := q.db.Query(ctx, listPostingan,
+		arg.Tipe,
+		arg.PenggunaID,
+		arg.KelasID,
+		arg.MataPelajaran,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +231,7 @@ func (q *Queries) ListPostingan(ctx context.Context, arg ListPostinganParams) ([
 }
 
 const updateEmailPengguna = `-- name: UpdateEmailPengguna :one
-UPDATE pengguna SET email = $2 WHERE id = $1 RETURNING id, username, email, phone, profile_picture, password, dibuat
+UPDATE pengguna SET email = $2 WHERE id = $1 RETURNING id, username, email, phone, profile_picture
 `
 
 type UpdateEmailPenggunaParams struct {
@@ -224,17 +239,23 @@ type UpdateEmailPenggunaParams struct {
 	Email string `json:"email"`
 }
 
-func (q *Queries) UpdateEmailPengguna(ctx context.Context, arg UpdateEmailPenggunaParams) (Pengguna, error) {
+type UpdateEmailPenggunaRow struct {
+	ID             int32       `json:"id"`
+	Username       string      `json:"username"`
+	Email          string      `json:"email"`
+	Phone          pgtype.Text `json:"phone"`
+	ProfilePicture pgtype.Text `json:"profile_picture"`
+}
+
+func (q *Queries) UpdateEmailPengguna(ctx context.Context, arg UpdateEmailPenggunaParams) (UpdateEmailPenggunaRow, error) {
 	row := q.db.QueryRow(ctx, updateEmailPengguna, arg.ID, arg.Email)
-	var i Pengguna
+	var i UpdateEmailPenggunaRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
 		&i.Email,
 		&i.Phone,
 		&i.ProfilePicture,
-		&i.Password,
-		&i.Dibuat,
 	)
 	return i, err
 }
@@ -254,7 +275,7 @@ func (q *Queries) UpdatePasswordPengguna(ctx context.Context, arg UpdatePassword
 }
 
 const updatePhonePengguna = `-- name: UpdatePhonePengguna :one
-UPDATE pengguna SET phone = $2 WHERE id = $1 RETURNING id, username, email, phone, profile_picture, password, dibuat
+UPDATE pengguna SET phone = $2 WHERE id = $1 RETURNING id, username, email, phone, profile_picture
 `
 
 type UpdatePhonePenggunaParams struct {
@@ -262,23 +283,66 @@ type UpdatePhonePenggunaParams struct {
 	Phone pgtype.Text `json:"phone"`
 }
 
-func (q *Queries) UpdatePhonePengguna(ctx context.Context, arg UpdatePhonePenggunaParams) (Pengguna, error) {
+type UpdatePhonePenggunaRow struct {
+	ID             int32       `json:"id"`
+	Username       string      `json:"username"`
+	Email          string      `json:"email"`
+	Phone          pgtype.Text `json:"phone"`
+	ProfilePicture pgtype.Text `json:"profile_picture"`
+}
+
+func (q *Queries) UpdatePhonePengguna(ctx context.Context, arg UpdatePhonePenggunaParams) (UpdatePhonePenggunaRow, error) {
 	row := q.db.QueryRow(ctx, updatePhonePengguna, arg.ID, arg.Phone)
-	var i Pengguna
+	var i UpdatePhonePenggunaRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
 		&i.Email,
 		&i.Phone,
 		&i.ProfilePicture,
-		&i.Password,
+	)
+	return i, err
+}
+
+const updatePostingan = `-- name: UpdatePostingan :one
+UPDATE postingan
+SET judul = $2, deskripsi = $3, lampiran = $4, tipe = $5
+WHERE id = $1
+RETURNING id, judul, deskripsi, lampiran, tipe, pengguna_id, kelas_id, dibuat
+`
+
+type UpdatePostinganParams struct {
+	ID        int32       `json:"id"`
+	Judul     string      `json:"judul"`
+	Deskripsi pgtype.Text `json:"deskripsi"`
+	Lampiran  []string    `json:"lampiran"`
+	Tipe      TipePost    `json:"tipe"`
+}
+
+func (q *Queries) UpdatePostingan(ctx context.Context, arg UpdatePostinganParams) (Postingan, error) {
+	row := q.db.QueryRow(ctx, updatePostingan,
+		arg.ID,
+		arg.Judul,
+		arg.Deskripsi,
+		arg.Lampiran,
+		arg.Tipe,
+	)
+	var i Postingan
+	err := row.Scan(
+		&i.ID,
+		&i.Judul,
+		&i.Deskripsi,
+		&i.Lampiran,
+		&i.Tipe,
+		&i.PenggunaID,
+		&i.KelasID,
 		&i.Dibuat,
 	)
 	return i, err
 }
 
 const updateProfilePicturePengguna = `-- name: UpdateProfilePicturePengguna :one
-UPDATE pengguna SET profile_picture = $2 WHERE id = $1 RETURNING id, username, email, phone, profile_picture, password, dibuat
+UPDATE pengguna SET profile_picture = $2 WHERE id = $1 RETURNING id, username, email, phone, profile_picture
 `
 
 type UpdateProfilePicturePenggunaParams struct {
@@ -286,17 +350,23 @@ type UpdateProfilePicturePenggunaParams struct {
 	ProfilePicture pgtype.Text `json:"profile_picture"`
 }
 
-func (q *Queries) UpdateProfilePicturePengguna(ctx context.Context, arg UpdateProfilePicturePenggunaParams) (Pengguna, error) {
+type UpdateProfilePicturePenggunaRow struct {
+	ID             int32       `json:"id"`
+	Username       string      `json:"username"`
+	Email          string      `json:"email"`
+	Phone          pgtype.Text `json:"phone"`
+	ProfilePicture pgtype.Text `json:"profile_picture"`
+}
+
+func (q *Queries) UpdateProfilePicturePengguna(ctx context.Context, arg UpdateProfilePicturePenggunaParams) (UpdateProfilePicturePenggunaRow, error) {
 	row := q.db.QueryRow(ctx, updateProfilePicturePengguna, arg.ID, arg.ProfilePicture)
-	var i Pengguna
+	var i UpdateProfilePicturePenggunaRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
 		&i.Email,
 		&i.Phone,
 		&i.ProfilePicture,
-		&i.Password,
-		&i.Dibuat,
 	)
 	return i, err
 }

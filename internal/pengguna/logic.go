@@ -11,6 +11,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Get godoc
+//
+//	@Summary		Mendapatkan informasi pengguna
+//	@Description	Mendapatkan informasi pengguna dengan parsing ID pengguna dari token
+//	@Tags			Pengguna
+//	@Produce		json
+//	@Param			Authorization	header		string	true	"Token"
+//	@Success		200				{object}	GetPenggunaSuccessResponse
+//	@Failure		401				{object}	GetPenggunaFailure401Response
+//	@Failure		400				{object}	GetPenggunaFailure400Response
+//	@Router			/pengguna [get]
 func (h *Handler) Get(c *echo.Context) error {
 	claims, err := utils.GetClaims(c)
 	if err != nil {
