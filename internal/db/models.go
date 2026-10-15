@@ -133,7 +133,7 @@ type PengumpulanTuga struct {
 type Postingan struct {
 	ID         int32            `json:"id"`
 	Judul      string           `json:"judul"`
-	Deskripsi  string           `json:"deskripsi"`
+	Deskripsi  pgtype.Text      `json:"deskripsi"`
 	Lampiran   []string         `json:"lampiran"`
 	Tipe       TipePost         `json:"tipe"`
 	PenggunaID int32            `json:"pengguna_id"`
